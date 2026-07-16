@@ -61,7 +61,17 @@ public class FormatUtils {
      */
     @Deprecated
     public static String formatMinutesSeconds(final long sourceDuration, final TimeUnit sourceUnit) {
-        return formatMinutesSeconds(sourceDuration, sourceUnit.toChronoUnit());
+        final long millis = TimeUnit.MILLISECONDS.convert(sourceDuration, sourceUnit);
+
+        final long millisInMinute = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
+        final int minutes = (int) (millis / millisInMinute);
+        final long secondsMillisLeft = millis - minutes * millisInMinute;
+
+        final long millisInSecond = TimeUnit.MILLISECONDS.convert(1, TimeUnit.SECONDS);
+        final int seconds = (int) (secondsMillisLeft / millisInSecond);
+        final long millisLeft = secondsMillisLeft - seconds * millisInSecond;
+
+        return pad2Places(minutes) + ":" + pad2Places(seconds) + "." + pad3Places(millisLeft);
     }
 
     /**
@@ -86,7 +96,13 @@ public class FormatUtils {
      */
     @Deprecated
     public static String formatHoursMinutesSeconds(final long sourceDuration, final TimeUnit sourceUnit) {
-        return formatHoursMinutesSeconds(sourceDuration, sourceUnit.toChronoUnit());
+        final long millis = TimeUnit.MILLISECONDS.convert(sourceDuration, sourceUnit);
+
+        final long millisInHour = TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
+        final int hours = (int) (millis / millisInHour);
+        final long minutesSecondsMillisLeft = millis - hours * millisInHour;
+
+        return pad2Places(hours) + ":" + formatMinutesSeconds(minutesSecondsMillisLeft, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -99,6 +115,14 @@ public class FormatUtils {
     public static String formatHoursMinutesSeconds(final long sourceDuration, final ChronoUnit sourceUnit) {
         final Duration duration = Duration.ZERO.plus(sourceDuration, sourceUnit);
         return String.format("%02d:%02d:%02d.%03d", duration.toHours(), duration.toMinutesPart(), duration.toSecondsPart(), duration.toMillisPart());
+    }
+
+    private static String pad2Places(final long val) {
+        return (val < 10) ? "0" + val : String.valueOf(val);
+    }
+
+    private static String pad3Places(final long val) {
+        return (val < 100) ? "0" + pad2Places(val) : String.valueOf(val);
     }
 
     /**
