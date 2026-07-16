@@ -173,9 +173,58 @@ public class TestFormatUtils {
     }
 
     @ParameterizedTest
+    @MethodSource("getFormatMinSec")
+    public void testFormatMinutesSeconds(long sourceDuration, TimeUnit sourceUnit, String expected) {
+        assertEquals(expected, FormatUtils.formatMinutesSeconds(sourceDuration, sourceUnit));
+    }
+
+    @ParameterizedTest
+    @MethodSource("getFormatMinSec")
+    public void testFormatMinutesSecondsChrono(long sourceDuration, TimeUnit sourceUnit, String expected) {
+        assertEquals(expected, FormatUtils.formatMinutesSeconds(sourceDuration, sourceUnit.toChronoUnit()));
+    }
+
+    private static Stream<Arguments> getFormatMinSec() {
+        return Stream.of(
+                Arguments.of(1L, TimeUnit.MINUTES, "01:00.000"),
+                Arguments.of(2L, TimeUnit.MINUTES, "02:00.000"),
+                Arguments.of(61L, TimeUnit.MINUTES, "61:00.000"),
+                Arguments.of(1L, TimeUnit.SECONDS, "00:01.000"),
+                Arguments.of(10L, TimeUnit.SECONDS, "00:10.000"),
+                Arguments.of(777L, TimeUnit.MILLISECONDS, "00:00.777"),
+                Arguments.of(7777, TimeUnit.MILLISECONDS, "00:07.777"),
+                Arguments.of(61000, TimeUnit.MILLISECONDS, "01:01.000")
+        );
+    }
+
+    @ParameterizedTest
     @MethodSource("getFormatTime")
     public void testFormatTime(long sourceDuration, TimeUnit sourceUnit, String expected) {
         assertEquals(expected, FormatUtils.formatHoursMinutesSeconds(sourceDuration, sourceUnit));
+    }
+
+    private static Stream<Arguments> getFormatTime() {
+        return Stream.of(Arguments.of(0L, TimeUnit.DAYS, "00:00:00.000"),
+                Arguments.of(1L, TimeUnit.HOURS, "01:00:00.000"),
+                Arguments.of(2L, TimeUnit.HOURS, "02:00:00.000"),
+                Arguments.of(1L, TimeUnit.MINUTES, "00:01:00.000"),
+                Arguments.of(10L, TimeUnit.SECONDS, "00:00:10.000"),
+                Arguments.of(777L, TimeUnit.MILLISECONDS, "00:00:00.777"),
+                Arguments.of(7777, TimeUnit.MILLISECONDS, "00:00:07.777"),
+                Arguments.of(TimeUnit.MILLISECONDS.convert(20, TimeUnit.HOURS)
+                        + TimeUnit.MILLISECONDS.convert(11, TimeUnit.MINUTES)
+                        + TimeUnit.MILLISECONDS.convert(36, TimeUnit.SECONDS)
+                        + TimeUnit.MILLISECONDS.convert(897, TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS, "20:11:36.897"),
+                Arguments.of(TimeUnit.MILLISECONDS.convert(999, TimeUnit.HOURS)
+                        + TimeUnit.MILLISECONDS.convert(60, TimeUnit.MINUTES)
+                        + TimeUnit.MILLISECONDS.convert(60, TimeUnit.SECONDS)
+                        + TimeUnit.MILLISECONDS.convert(1001, TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS, "1000:01:01.001"));
+    }
+
+    @ParameterizedTest
+    @MethodSource("getFormatTime")
+    public void testFormatTimeChrono(long sourceDuration, TimeUnit sourceUnit, String expected) {
+        assertEquals(expected, FormatUtils.formatHoursMinutesSeconds(sourceDuration, sourceUnit.toChronoUnit()));
     }
 
     private static Stream<Arguments> getFormatTime() {

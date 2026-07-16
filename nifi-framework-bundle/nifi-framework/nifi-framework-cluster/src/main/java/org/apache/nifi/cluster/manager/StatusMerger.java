@@ -69,6 +69,7 @@ import org.apache.nifi.web.api.entity.ProcessGroupStatusSnapshotEntity;
 import org.apache.nifi.web.api.entity.ProcessorStatusSnapshotEntity;
 import org.apache.nifi.web.api.entity.RemoteProcessGroupStatusSnapshotEntity;
 
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -79,7 +80,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 public class StatusMerger {
     private static final String ZERO_COUNT = "0";
@@ -474,7 +474,7 @@ public class StatusMerger {
         final String tasks = (taskCount == null) ? "-" : formatCount(taskCount);
         target.setTasks(tasks);
 
-        target.setTasksDuration(FormatUtils.formatHoursMinutesSeconds(target.getTasksDurationNanos(), TimeUnit.NANOSECONDS));
+        target.setTasksDuration(FormatUtils.formatHoursMinutesSeconds(target.getTasksDurationNanos(), ChronoUnit.NANOS));
     }
 
     public static void merge(final ConnectionStatusSnapshotEntity target, ConnectionStatusSnapshotEntity toMerge) {
@@ -954,7 +954,7 @@ public class StatusMerger {
     }
 
     public static void updatePrettyPrintedFields(final GarbageCollectionDTO target) {
-        target.setCollectionTime(FormatUtils.formatHoursMinutesSeconds(target.getCollectionMillis(), TimeUnit.MILLISECONDS));
+        target.setCollectionTime(FormatUtils.formatHoursMinutesSeconds(target.getCollectionMillis(), ChronoUnit.MILLIS));
     }
 
     public static void merge(final CountersDTO target, final CountersDTO toMerge, final String nodeId, final String nodeAddress, final Integer nodeApiPort) {
@@ -1165,7 +1165,7 @@ public class StatusMerger {
         target.setQueuedSize(formatDataSize(target.getBytesQueued()));
 
         if (Boolean.TRUE.equals(target.getIdle()) && target.getIdleDurationMillis() != null) {
-            target.setIdleDuration(FormatUtils.formatHoursMinutesSeconds(target.getIdleDurationMillis(), TimeUnit.MILLISECONDS));
+            target.setIdleDuration(FormatUtils.formatHoursMinutesSeconds(target.getIdleDurationMillis(), ChronoUnit.MILLIS));
         } else {
             target.setIdleDuration(null);
         }

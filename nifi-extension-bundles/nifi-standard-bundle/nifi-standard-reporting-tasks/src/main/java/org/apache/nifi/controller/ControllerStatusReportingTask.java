@@ -32,6 +32,7 @@ import org.apache.nifi.util.FormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -333,7 +334,7 @@ public class ControllerStatusReportingTask extends AbstractReportingTask {
         final long diff = Math.abs(newValue - oldValue);
 
         final String formattedDiff = formatDataSize ? FormatUtils.formatDataSize(diff)
-                : (formatTime ? FormatUtils.formatHoursMinutesSeconds(diff, TimeUnit.NANOSECONDS) : String.valueOf(diff));
+                : (formatTime ? FormatUtils.formatHoursMinutesSeconds(diff, ChronoUnit.NANOS) : String.valueOf(diff));
 
         if (oldValue > newValue) {
             return " (-" + formattedDiff + ")";
@@ -389,7 +390,7 @@ public class ControllerStatusReportingTask extends AbstractReportingTask {
             final String invocations = String.valueOf(invocationCount);
 
             final long nanos = processorStatus.getProcessingNanos() / divisor;
-            final String procTime = FormatUtils.formatHoursMinutesSeconds(nanos, TimeUnit.NANOSECONDS);
+            final String procTime = FormatUtils.formatHoursMinutesSeconds(nanos, ChronoUnit.NANOS);
 
             String runStatus = "";
             if (processorStatus.getRunStatus() != null) {

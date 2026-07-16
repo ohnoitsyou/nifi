@@ -22,7 +22,9 @@ import org.apache.nifi.time.DurationFormat;
 import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -47,6 +49,17 @@ public class FormatUtils {
 
     private static final int NANOS_PER_MILLI = 1_000_000;
 
+    // Date defaults as local runtime constants
+    private static final int EPOCH_YEAR = LocalDate.EPOCH.getYear();
+    private static final int FIRST_MONTH_OF_YEAR = LocalDate.EPOCH.getMonthValue();
+    private static final int FIRST_DAY_OF_MONTH = LocalDate.EPOCH.getDayOfMonth();
+
+    // Time defaults as local runtime constants
+    private static final int FIRST_HOUR_OF_DAY = LocalTime.MIDNIGHT.getHour();
+    private static final int FIRST_MINUTE_OF_DAY = LocalTime.MIDNIGHT.getMinute();
+    private static final int FIRST_SECOND_OF_DAY = LocalTime.MIDNIGHT.getSecond();
+    private static final int FIRST_NANO_OF_DAY = LocalTime.MIDNIGHT.getNano();
+
     /**
      * Formats the specified count by adding commas.
      *
@@ -63,7 +76,9 @@ public class FormatUtils {
      * @param sourceDuration the duration to format
      * @param sourceUnit     the unit to interpret the duration
      * @return representation of the given time data in minutes/seconds
+     * @deprecated Use {@link #formatMinutesSeconds(long, ChronoUnit)}
      */
+    @Deprecated
     public static String formatMinutesSeconds(final long sourceDuration, final TimeUnit sourceUnit) {
         final long millis = TimeUnit.MILLISECONDS.convert(sourceDuration, sourceUnit);
 
@@ -79,12 +94,26 @@ public class FormatUtils {
     }
 
     /**
+     * Formats the specified duration in 'mm:ss.SSS' format.
+     *
+     * @param sourceDuration the duration to format
+     * @param sourceUnit     the unit to interpret the duration
+     * @return representation of the given time data in minutes/seconds
+     */
+    public static String formatMinutesSeconds(final long sourceDuration, final ChronoUnit sourceUnit) {
+        final Duration duration = Duration.ZERO.plus(sourceDuration, sourceUnit);
+        return String.format("%02d:%02d.%03d", duration.toMinutes(), duration.toSecondsPart(), duration.toMillisPart());
+    }
+
+    /**
      * Formats the specified duration in 'HH:mm:ss.SSS' format.
      *
      * @param sourceDuration the duration to format
      * @param sourceUnit     the unit to interpret the duration
      * @return representation of the given time data in hours/minutes/seconds
+     * @deprecated Use {@link #formatMinutesSeconds(long, ChronoUnit)}
      */
+    @Deprecated
     public static String formatHoursMinutesSeconds(final long sourceDuration, final TimeUnit sourceUnit) {
         final long millis = TimeUnit.MILLISECONDS.convert(sourceDuration, sourceUnit);
 
@@ -95,19 +124,33 @@ public class FormatUtils {
         return pad2Places(hours) + ":" + formatMinutesSeconds(minutesSecondsMillisLeft, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * Formats the specified duration in 'HH:mm:ss.SSS' format.
+     *
+     * @param sourceDuration the duration to format
+     * @param sourceUnit     the unit to interpret the duration
+     * @return representation of the given time data in hours/minutes/seconds
+     */
+    public static String formatHoursMinutesSeconds(final long sourceDuration, final ChronoUnit sourceUnit) {
+        final Duration duration = Duration.ZERO.plus(sourceDuration, sourceUnit);
+        return String.format("%02d:%02d:%02d.%03d", duration.toHours(), duration.toMinutesPart(), duration.toSecondsPart(), duration.toMillisPart());
+    }
+
+    @Deprecated
     private static String pad2Places(final long val) {
         return (val < 10) ? "0" + val : String.valueOf(val);
     }
 
+    @Deprecated
     private static String pad3Places(final long val) {
         return (val < 100) ? "0" + pad2Places(val) : String.valueOf(val);
     }
 
     /**
-     * Formats the specified data size in human readable format.
+     * Formats the specified data size in human-readable format.
      *
      * @param dataSize Data size in bytes
-     * @return Human readable format
+     * @return Human-readable format
      */
     public static String formatDataSize(final double dataSize) {
         // initialize the formatter
@@ -161,6 +204,7 @@ public class FormatUtils {
      * @return a relative-time string describing the gap from {@code from} to {@code to}
      */
     public static String formatRelativeTime(final Instant from, final Instant to) {
+
         final long differenceMillis = to.toEpochMilli() - from.toEpochMilli();
         final boolean past = differenceMillis >= 0;
         final long absoluteDifferenceMillis = Math.abs(differenceMillis);
@@ -278,37 +322,27 @@ public class FormatUtils {
      * 3 seconds, 8 millis, 3 nanos (3008000003 nanos) - if includeTotalNanos = true
      *
      * @param nanos             the number of nanoseconds to format
-     * @param includeTotalNanos whether or not to include the total number of nanoseconds in parentheses in the returned value
+     * @param includeTotalNanos whether to include the total number of nanoseconds in parentheses in the returned value
      * @return a human-readable String that is a formatted representation of the given number of nanoseconds.
      */
     public static String formatNanos(final long nanos, final boolean includeTotalNanos) {
-        final StringBuilder sb = new StringBuilder();
+        Duration duration = Duration.ofNanos(nanos);
 
-        final long seconds = nanos >= 1000000000L ? nanos / 1000000000L : 0L;
-        long millis = nanos >= 1000000L ? nanos / 1000000L : 0L;
-        final long nanosLeft = nanos % 1000000L;
+        long seconds = duration.toSeconds();
+        long millis = duration.toMillisPart();
+        long nanosLeft = duration.toNanosPart() % NANOS_PER_MILLI;
 
+        final List<String> parts = new ArrayList<>();
         if (seconds > 0) {
-            sb.append(seconds).append(" seconds");
+            parts.add(seconds + " seconds");
         }
-        if (millis > 0) {
-            if (seconds > 0) {
-                sb.append(", ");
-                millis -= seconds * 1000L;
-            }
+        if (millis > 0 || !parts.isEmpty()) {
+            parts.add(millis + " millis");
+        }
+        parts.add(nanosLeft + " nanos");
 
-            sb.append(millis).append(" millis");
-        }
-        if (seconds > 0 || millis > 0) {
-            sb.append(", ");
-        }
-        sb.append(nanosLeft).append(" nanos");
-
-        if (includeTotalNanos) {
-            sb.append(" (").append(nanos).append(" nanos)");
-        }
-
-        return sb.toString();
+        final String output = String.join(", ", parts);
+        return includeTotalNanos ? String.format("%s (%d nanos)", output, nanos) : output;
     }
 
     /**
@@ -325,44 +359,27 @@ public class FormatUtils {
 
         final TemporalAccessor parsed = formatter.parse(text);
 
-        // Default to 1970 as start of epoch
-        int year = 1970;
-        if (parsed.isSupported(ChronoField.YEAR)) {
-            year = parsed.get(ChronoField.YEAR);
+        // Attempt to get the Date and Time values directly or fallback to constructing them
+        LocalDate localDate = parsed.query(TemporalQueries.localDate());
+        if (localDate == null) {
+            localDate = LocalDate.of(
+                    parsed.isSupported(ChronoField.YEAR) ? parsed.get(ChronoField.YEAR) : EPOCH_YEAR,
+                    parsed.isSupported(ChronoField.MONTH_OF_YEAR) ? parsed.get(ChronoField.MONTH_OF_YEAR) : FIRST_MONTH_OF_YEAR,
+                    parsed.isSupported(ChronoField.DAY_OF_MONTH) ? parsed.get(ChronoField.DAY_OF_MONTH) : FIRST_DAY_OF_MONTH
+            );
         }
 
-        int month = 1;
-        if (parsed.isSupported(ChronoField.MONTH_OF_YEAR)) {
-            month = parsed.get(ChronoField.MONTH_OF_YEAR);
+        LocalTime localTime = parsed.query(TemporalQueries.localTime());
+        if (localTime == null) {
+            localTime = LocalTime.of(
+                    parsed.isSupported(ChronoField.HOUR_OF_DAY) ? parsed.get(ChronoField.HOUR_OF_DAY) : FIRST_HOUR_OF_DAY,
+                    parsed.isSupported(ChronoField.MINUTE_OF_HOUR) ? parsed.get(ChronoField.MINUTE_OF_HOUR) : FIRST_MINUTE_OF_DAY,
+                    parsed.isSupported(ChronoField.SECOND_OF_MINUTE) ? parsed.get(ChronoField.SECOND_OF_MINUTE) : FIRST_SECOND_OF_DAY,
+                    parsed.isSupported(ChronoField.NANO_OF_SECOND) ? parsed.get(ChronoField.NANO_OF_SECOND) : FIRST_NANO_OF_DAY
+            );
         }
 
-        int day = 1;
-        if (parsed.isSupported(ChronoField.DAY_OF_MONTH)) {
-            day = parsed.get(ChronoField.DAY_OF_MONTH);
-        }
-
-        int hour = 0;
-        if (parsed.isSupported(ChronoField.HOUR_OF_DAY)) {
-            hour = parsed.get(ChronoField.HOUR_OF_DAY);
-        }
-
-        int minute = 0;
-        if (parsed.isSupported(ChronoField.MINUTE_OF_HOUR)) {
-            minute = parsed.get(ChronoField.MINUTE_OF_HOUR);
-        }
-
-        int second = 0;
-        if (parsed.isSupported(ChronoField.SECOND_OF_MINUTE)) {
-            second = parsed.get(ChronoField.SECOND_OF_MINUTE);
-        }
-
-        int nano = 0;
-        if (parsed.isSupported(ChronoField.MILLI_OF_SECOND)) {
-            // Get nanoseconds for maximum resolution
-            nano = parsed.get(ChronoField.NANO_OF_SECOND);
-        }
-
-        final LocalDateTime localDateTime = LocalDateTime.of(year, month, day, hour, minute, second, nano);
+        final LocalDateTime localDateTime = LocalDateTime.of(localDate, localTime);
 
         ZoneId zoneId = parsed.query(TemporalQueries.zoneId());
         if (zoneId == null) {
