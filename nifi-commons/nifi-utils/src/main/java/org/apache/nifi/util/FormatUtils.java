@@ -20,6 +20,7 @@ import org.apache.nifi.processor.DataUnit;
 import org.apache.nifi.time.DurationFormat;
 
 import java.text.NumberFormat;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -28,6 +29,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalQueries;
 import java.util.Locale;
@@ -70,6 +72,11 @@ public class FormatUtils {
         return pad2Places(minutes) + ":" + pad2Places(seconds) + "." + pad3Places(millisLeft);
     }
 
+    public static String formatMinutesSeconds(final long sourceDuration, final ChronoUnit sourceUnit) {
+        final Duration duration = Duration.ZERO.plus(sourceDuration, sourceUnit);
+        return String.format("%02d:%02d.%03d", duration.toMinutes(), duration.toSecondsPart(), duration.toMillisPart());
+    }
+
     /**
      * Formats the specified duration in 'HH:mm:ss.SSS' format.
      *
@@ -85,6 +92,11 @@ public class FormatUtils {
         final long minutesSecondsMillisLeft = millis - hours * millisInHour;
 
         return pad2Places(hours) + ":" + formatMinutesSeconds(minutesSecondsMillisLeft, TimeUnit.MILLISECONDS);
+    }
+
+    public static String formatHoursMinutesSeconds(final long sourceDuration, final ChronoUnit sourceUnit) {
+        final Duration duration = Duration.ZERO.plus(sourceDuration, sourceUnit);
+        return String.format("%02d:%02d:%02d.%03d", duration.toHours(), duration.toMinutesPart(), duration.toSecondsPart(), duration.toMillisPart());
     }
 
     private static String pad2Places(final long val) {

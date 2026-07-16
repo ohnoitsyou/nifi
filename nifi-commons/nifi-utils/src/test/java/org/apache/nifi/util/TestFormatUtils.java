@@ -172,9 +172,40 @@ public class TestFormatUtils {
     }
 
     @ParameterizedTest
+    @MethodSource("getFormatMinSec")
+    public void testFormatMinutesSeconds(long sourceDuration, TimeUnit sourceUnit, String expected) {
+        assertEquals(expected, FormatUtils.formatMinutesSeconds(sourceDuration, sourceUnit));
+    }
+
+    @ParameterizedTest
+    @MethodSource("getFormatMinSec")
+    public void testFormatMinutesSecondsChrono(long sourceDuration, TimeUnit sourceUnit, String expected) {
+        assertEquals(expected, FormatUtils.formatMinutesSeconds(sourceDuration, sourceUnit.toChronoUnit()));
+    }
+
+    private static Stream<Arguments> getFormatMinSec() {
+        return Stream.of(
+                Arguments.of(1L, TimeUnit.MINUTES, "01:00.000"),
+                Arguments.of(2L, TimeUnit.MINUTES, "02:00.000"),
+                Arguments.of(61L, TimeUnit.MINUTES, "61:00.000"),
+                Arguments.of(1L, TimeUnit.SECONDS, "00:01.000"),
+                Arguments.of(10L, TimeUnit.SECONDS, "00:10.000"),
+                Arguments.of(777L, TimeUnit.MILLISECONDS, "00:00.777"),
+                Arguments.of(7777, TimeUnit.MILLISECONDS, "00:07.777"),
+                Arguments.of(61000, TimeUnit.MILLISECONDS, "01:01.000")
+        );
+    }
+
+    @ParameterizedTest
     @MethodSource("getFormatTime")
     public void testFormatTime(long sourceDuration, TimeUnit sourceUnit, String expected) {
         assertEquals(expected, FormatUtils.formatHoursMinutesSeconds(sourceDuration, sourceUnit));
+    }
+
+    @ParameterizedTest
+    @MethodSource("getFormatTime")
+    public void testFormatTimeChrono(long sourceDuration, TimeUnit sourceUnit, String expected) {
+        assertEquals(expected, FormatUtils.formatHoursMinutesSeconds(sourceDuration, sourceUnit.toChronoUnit()));
     }
 
     private static Stream<Arguments> getFormatTime() {
