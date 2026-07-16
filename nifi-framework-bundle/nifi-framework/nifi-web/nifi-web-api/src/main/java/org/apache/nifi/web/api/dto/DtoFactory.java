@@ -283,6 +283,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.Collator;
 import java.text.NumberFormat;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1317,7 +1318,7 @@ public final class DtoFactory {
 
         snapshot.setTaskCount(procStatus.getInvocations());
         snapshot.setTasksDurationNanos(procStatus.getProcessingNanos());
-        snapshot.setTasksDuration(FormatUtils.formatHoursMinutesSeconds(procStatus.getProcessingNanos(), TimeUnit.NANOSECONDS));
+        snapshot.setTasksDuration(FormatUtils.formatHoursMinutesSeconds(procStatus.getProcessingNanos(), ChronoUnit.NANOS));
 
         // determine the run status
         snapshot.setRunStatus(procStatus.getRunStatus().toString());
@@ -3766,7 +3767,7 @@ public final class DtoFactory {
         snapshot.setVersionInfo(versionInfoDto);
 
         // uptime
-        snapshot.setUptime(FormatUtils.formatHoursMinutesSeconds(sysDiagnostics.getUptime(), TimeUnit.MILLISECONDS));
+        snapshot.setUptime(FormatUtils.formatHoursMinutesSeconds(sysDiagnostics.getUptime(), ChronoUnit.MILLIS));
 
         if (diagnosticLevel == DiagnosticLevel.VERBOSE) {
             final List<ResourceClaimDetailsDTO> resourceClaimDtos = new ArrayList<>();
@@ -3840,7 +3841,7 @@ public final class DtoFactory {
         final SystemDiagnosticsSnapshotDTO.GarbageCollectionDTO dto = new SystemDiagnosticsSnapshotDTO.GarbageCollectionDTO();
         dto.setName(name);
         dto.setCollectionCount(garbageCollection.getCollectionCount());
-        dto.setCollectionTime(FormatUtils.formatHoursMinutesSeconds(garbageCollection.getCollectionTime(), TimeUnit.MILLISECONDS));
+        dto.setCollectionTime(FormatUtils.formatHoursMinutesSeconds(garbageCollection.getCollectionTime(), ChronoUnit.MILLIS));
         dto.setCollectionMillis(garbageCollection.getCollectionTime());
         return dto;
     }
@@ -4110,7 +4111,7 @@ public final class DtoFactory {
         flowDiagnosticsDto.setActiveTimerDrivenThreads(flowController.getActiveTimerDrivenThreadCount());
         flowDiagnosticsDto.setBundlesLoaded(bundlesLoaded);
         flowDiagnosticsDto.setTimeZone(System.getProperty("user.timezone"));
-        flowDiagnosticsDto.setUptime(FormatUtils.formatHoursMinutesSeconds(systemDiagnostics.getUptime(), TimeUnit.MILLISECONDS));
+        flowDiagnosticsDto.setUptime(FormatUtils.formatHoursMinutesSeconds(systemDiagnostics.getUptime(), ChronoUnit.MILLIS));
 
         // controller-related information
         controllerDiagnosticsDto.setClusterCoordinator(flowController.isClusterCoordinator());
@@ -5313,7 +5314,7 @@ public final class DtoFactory {
             snapshot.setIdle(true);
             final long idleMillis = idleDuration.get().toMillis();
             snapshot.setIdleDurationMillis(idleMillis);
-            snapshot.setIdleDuration(FormatUtils.formatHoursMinutesSeconds(idleMillis, TimeUnit.MILLISECONDS));
+            snapshot.setIdleDuration(FormatUtils.formatHoursMinutesSeconds(idleMillis, ChronoUnit.MILLIS));
         } else {
             snapshot.setIdle(false);
         }

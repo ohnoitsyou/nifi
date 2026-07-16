@@ -29,6 +29,7 @@ import java.lang.management.MemoryUsage;
 import java.lang.management.RuntimeMXBean;
 import java.lang.management.ThreadMXBean;
 import java.text.NumberFormat;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -52,7 +53,7 @@ public class JVMDiagnosticTask implements DiagnosticTask {
         details.add("Heap Used: " + FormatUtils.formatDataSize(heap.getUsed()));
         details.add("Heap Committed: " + FormatUtils.formatDataSize(heap.getCommitted()));
 
-        details.add("JVM Uptime: " + FormatUtils.formatHoursMinutesSeconds(runtime.getUptime(), TimeUnit.MILLISECONDS));
+        details.add("JVM Uptime: " + FormatUtils.formatHoursMinutesSeconds(runtime.getUptime(), ChronoUnit.MILLIS));
 
         details.add("JVM Spec Name: " + runtime.getSpecName());
         details.add("JVM Spec Vendor: " + runtime.getSpecVendor());

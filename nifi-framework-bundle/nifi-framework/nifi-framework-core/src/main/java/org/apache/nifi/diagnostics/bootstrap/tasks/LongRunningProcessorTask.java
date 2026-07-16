@@ -25,6 +25,7 @@ import org.apache.nifi.diagnostics.DiagnosticsDumpElement;
 import org.apache.nifi.diagnostics.StandardDiagnosticsDumpElement;
 import org.apache.nifi.util.FormatUtils;
 
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -54,7 +55,7 @@ public class LongRunningProcessorTask implements DiagnosticTask {
                     }
 
                     details.add("%s - %s has been active for %s minutes".formatted(processorNode, threadName,
-                            FormatUtils.formatMinutesSeconds(activeThread.getActiveMillis(), TimeUnit.MILLISECONDS)));
+                            FormatUtils.formatMinutesSeconds(activeThread.getActiveMillis(), ChronoUnit.MILLIS)));
                 }
             }
         }
