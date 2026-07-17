@@ -32,6 +32,8 @@ import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalQueries;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -41,6 +43,8 @@ public class FormatUtils {
     // 'public static final' members defined for backward compatibility, since they were moved to TimeFormat.
     public static final String TIME_DURATION_REGEX = DurationFormat.TIME_DURATION_REGEX;
     public static final Pattern TIME_DURATION_PATTERN = DurationFormat.TIME_DURATION_PATTERN;
+
+    private static final int NANOS_PER_MILLI = 1_000_000;
     /**
      * Formats the specified count by adding commas.
      *
@@ -229,33 +233,23 @@ public class FormatUtils {
      * @return a human-readable String that is a formatted representation of the given number of nanoseconds.
      */
     public static String formatNanos(final long nanos, final boolean includeTotalNanos) {
-        final StringBuilder sb = new StringBuilder();
+        Duration duration = Duration.ofNanos(nanos);
 
-        final long seconds = nanos >= 1000000000L ? nanos / 1000000000L : 0L;
-        long millis = nanos >= 1000000L ? nanos / 1000000L : 0L;
-        final long nanosLeft = nanos % 1000000L;
+        long seconds = duration.toSeconds();
+        long millis = duration.toMillisPart();
+        long nanosLeft = duration.toNanosPart() % NANOS_PER_MILLI;
 
+        final List<String> parts = new ArrayList<>();
         if (seconds > 0) {
-            sb.append(seconds).append(" seconds");
+            parts.add(seconds + " seconds");
         }
-        if (millis > 0) {
-            if (seconds > 0) {
-                sb.append(", ");
-                millis -= seconds * 1000L;
-            }
+        if (millis > 0 || !parts.isEmpty()) {
+            parts.add(millis + " millis");
+        }
+        parts.add(nanosLeft + " nanos");
 
-            sb.append(millis).append(" millis");
-        }
-        if (seconds > 0 || millis > 0) {
-            sb.append(", ");
-        }
-        sb.append(nanosLeft).append(" nanos");
-
-        if (includeTotalNanos) {
-            sb.append(" (").append(nanos).append(" nanos)");
-        }
-
-        return sb.toString();
+        final String output = String.join(", ", parts);
+        return includeTotalNanos ? String.format("%s (%d nanos)", output, nanos) : output;
     }
 
     /**
