@@ -32,7 +32,6 @@ import java.text.NumberFormat;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class JVMDiagnosticTask implements DiagnosticTask {
     @Override

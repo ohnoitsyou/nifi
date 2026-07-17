@@ -28,7 +28,6 @@ import org.apache.nifi.util.FormatUtils;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class LongRunningProcessorTask implements DiagnosticTask {
     private static final long MIN_ACTIVE_MILLIS = 30_000L;
