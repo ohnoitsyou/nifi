@@ -22,8 +22,11 @@ import org.apache.nifi.time.DurationFormat;
 import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
+import java.time.Year;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -45,6 +48,18 @@ public class FormatUtils {
     public static final Pattern TIME_DURATION_PATTERN = DurationFormat.TIME_DURATION_PATTERN;
 
     private static final int NANOS_PER_MILLI = 1_000_000;
+
+    // Date defaults as local runtime constants
+    private static final int EPOCH_YEAR = LocalDate.EPOCH.getYear();
+    private static final int FIRST_MONTH_OF_YEAR = LocalDate.EPOCH.getMonthValue();
+    private static final int FIRST_DAY_OF_MONTH = LocalDate.EPOCH.getDayOfMonth();
+
+    // Time defaults as local runtime constants
+    private static final int FIRST_HOUR_OF_DAY = LocalTime.MIDNIGHT.getHour();
+    private static final int FIRST_MINUTE_OF_DAY = LocalTime.MIDNIGHT.getMinute();
+    private static final int FIRST_SECOND_OF_DAY = LocalTime.MIDNIGHT.getSecond();
+    private static final int FIRST_NANO_OF_DAY = LocalTime.MIDNIGHT.getNano();
+
     /**
      * Formats the specified count by adding commas.
      *
@@ -266,44 +281,27 @@ public class FormatUtils {
 
         final TemporalAccessor parsed = formatter.parse(text);
 
-        // Default to 1970 as start of epoch
-        int year = 1970;
-        if (parsed.isSupported(ChronoField.YEAR)) {
-            year = parsed.get(ChronoField.YEAR);
+        // Attempt to get the Date and Time values directly or fallback to constructing them
+        LocalDate localDate = parsed.query(TemporalQueries.localDate());
+        if (localDate == null) {
+            localDate = LocalDate.of(
+                    parsed.isSupported(ChronoField.YEAR) ? parsed.get(ChronoField.YEAR) : EPOCH_YEAR,
+                    parsed.isSupported(ChronoField.MONTH_OF_YEAR) ? parsed.get(ChronoField.MONTH_OF_YEAR) : FIRST_MONTH_OF_YEAR,
+                    parsed.isSupported(ChronoField.DAY_OF_MONTH) ? parsed.get(ChronoField.DAY_OF_MONTH) : FIRST_DAY_OF_MONTH
+            );
         }
 
-        int month = 1;
-        if (parsed.isSupported(ChronoField.MONTH_OF_YEAR)) {
-            month = parsed.get(ChronoField.MONTH_OF_YEAR);
+        LocalTime localTime = parsed.query(TemporalQueries.localTime());
+        if (localTime == null) {
+            localTime = LocalTime.of(
+                    parsed.isSupported(ChronoField.HOUR_OF_DAY) ? parsed.get(ChronoField.HOUR_OF_DAY) : FIRST_HOUR_OF_DAY,
+                    parsed.isSupported(ChronoField.MINUTE_OF_HOUR) ? parsed.get(ChronoField.MINUTE_OF_HOUR) : FIRST_MINUTE_OF_DAY,
+                    parsed.isSupported(ChronoField.SECOND_OF_MINUTE) ? parsed.get(ChronoField.SECOND_OF_MINUTE) : FIRST_SECOND_OF_DAY,
+                    parsed.isSupported(ChronoField.NANO_OF_SECOND) ? parsed.get(ChronoField.NANO_OF_SECOND) : FIRST_NANO_OF_DAY
+            );
         }
 
-        int day = 1;
-        if (parsed.isSupported(ChronoField.DAY_OF_MONTH)) {
-            day = parsed.get(ChronoField.DAY_OF_MONTH);
-        }
-
-        int hour = 0;
-        if (parsed.isSupported(ChronoField.HOUR_OF_DAY)) {
-            hour = parsed.get(ChronoField.HOUR_OF_DAY);
-        }
-
-        int minute = 0;
-        if (parsed.isSupported(ChronoField.MINUTE_OF_HOUR)) {
-            minute = parsed.get(ChronoField.MINUTE_OF_HOUR);
-        }
-
-        int second = 0;
-        if (parsed.isSupported(ChronoField.SECOND_OF_MINUTE)) {
-            second = parsed.get(ChronoField.SECOND_OF_MINUTE);
-        }
-
-        int nano = 0;
-        if (parsed.isSupported(ChronoField.MILLI_OF_SECOND)) {
-            // Get nanoseconds for maximum resolution
-            nano = parsed.get(ChronoField.NANO_OF_SECOND);
-        }
-
-        final LocalDateTime localDateTime = LocalDateTime.of(year, month, day, hour, minute, second, nano);
+        final LocalDateTime localDateTime = LocalDateTime.of(localDate, localTime);
 
         ZoneId zoneId = parsed.query(TemporalQueries.zoneId());
         if (zoneId == null) {
